@@ -1,6 +1,10 @@
 # 植物大战僵尸 · 庭院保卫战（React 版）
 
+在线试玩：**<https://pvz-react.vercel.app>**
+
 把 [seth-xh/pvz](https://github.com/seth-xh/pvz) 的单文件网页游戏（一个约 6.7 MB 的 `index.html`）重写为 Vite + React + TypeScript 工程。玩法、数值、美术和样式与原版一致，改动的是工程结构：游戏逻辑与 React 解耦，两张精灵图从 base64 内联改为构建产物。
+
+> 大陆网络访问 `*.vercel.app` 通常需要代理。
 
 ## 技术栈
 
