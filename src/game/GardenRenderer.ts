@@ -1,7 +1,7 @@
 import gardenUrl from '../assets/garden.png'
 import spritesUrl from '../assets/sprites.png'
 import zombieAnimationsUrl from '../assets/zombie-animations.png'
-import { FIELD, PLANTS, P_CHERRY, P_CHOMPER, P_MINE, P_SUNFLOWER, P_WALLNUT, SPRITE_RECTS, ZOMBIES, center } from './config'
+import { FIELD, PLANTS, P_CHERRY, P_CHOMPER, P_MINE, P_SUNFLOWER, P_WALLNUT, SPRITE_RECTS, ZOMBIES, cellBounds, center } from './config'
 import type { LawnGame } from './LawnGame'
 import type { GameEvent, Mower, Plant, PlantType, Zombie, ZombieKind } from './types'
 import { ZOMBIE_FRAMES, zombieFrame } from './zombieAnimation'
@@ -554,14 +554,14 @@ export class GardenRenderer {
     c.lineWidth = 1
     for (let col = 0; col <= FIELD.cols; col++) {
       c.beginPath()
-      c.moveTo(FIELD.x + col * FIELD.cw, FIELD.y)
-      c.lineTo(FIELD.x + col * FIELD.cw, FIELD.y + FIELD.rows * FIELD.ch)
+      c.moveTo(FIELD.x + col * FIELD.cw, FIELD.rowEdges[0])
+      c.lineTo(FIELD.x + col * FIELD.cw, FIELD.rowEdges[FIELD.rows])
       c.stroke()
     }
-    for (let row = 0; row <= FIELD.rows; row++) {
+    for (const y of FIELD.rowEdges) {
       c.beginPath()
-      c.moveTo(FIELD.x, FIELD.y + row * FIELD.ch)
-      c.lineTo(FIELD.x + FIELD.cols * FIELD.cw, FIELD.y + row * FIELD.ch)
+      c.moveTo(FIELD.x, y)
+      c.lineTo(FIELD.x + FIELD.cols * FIELD.cw, y)
       c.stroke()
     }
     c.restore()
@@ -612,8 +612,7 @@ export class GardenRenderer {
   private drawHover(game: LawnGame, hover: { row: number; col: number }, selected: PlantType | 'shovel') {
     const c = this.ctx
     const { row, col } = hover
-    const x = FIELD.x + col * FIELD.cw
-    const y = FIELD.y + row * FIELD.ch
+    const { x, y, width, height } = cellBounds(row, col)
     const occupied = game.plants.some((p) => p.row === row && p.col === col)
     const valid =
       selected === 'shovel'
@@ -621,10 +620,10 @@ export class GardenRenderer {
         : !occupied && game.sun >= PLANTS[selected].cost && game.cooldowns[selected] <= 0
 
     c.fillStyle = valid ? '#f6fac339' : '#f6936935'
-    c.fillRect(x + 2, y + 2, FIELD.cw - 4, FIELD.ch - 4)
+    c.fillRect(x + 2, y + 2, width - 4, height - 4)
     c.strokeStyle = valid ? '#faffb9bb' : '#ffd19ba8'
     c.lineWidth = 2
-    c.strokeRect(x + 3, y + 3, FIELD.cw - 6, FIELD.ch - 6)
+    c.strokeRect(x + 3, y + 3, width - 6, height - 6)
 
     if (valid && selected !== 'shovel') {
       c.save()

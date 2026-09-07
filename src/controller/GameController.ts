@@ -1,7 +1,7 @@
 import { GardenAudio } from '../game/GardenAudio'
 import { GardenRenderer } from '../game/GardenRenderer'
 import { LawnGame } from '../game/LawnGame'
-import { FIELD, LEVELS, PLANTS, center } from '../game/config'
+import { FIELD, LEVELS, PLANTS, cellAt, center } from '../game/config'
 import type { EndSummary, GameEvent, PlantType } from '../game/types'
 import type { Settings } from '../store/appStore'
 import { useAppStore } from '../store/appStore'
@@ -260,17 +260,10 @@ export class GameController {
     }
   }
 
-  private toCell(p: { x: number; y: number }) {
-    const col = Math.floor((p.x - FIELD.x) / FIELD.cw)
-    const row = Math.floor((p.y - FIELD.y) / FIELD.ch)
-    const inside = col >= 0 && col < FIELD.cols && row >= 0 && row < FIELD.rows
-    return inside ? { row, col } : null
-  }
-
   pointerMove(event: { clientX: number; clientY: number }) {
     if (!this.game || this.paused) return
     const p = this.toCanvas(event)
-    this.hover = this.toCell(p)
+    this.hover = cellAt(p)
     const overSun = !!this.game.sunAt(p.x, p.y)
     this.canvas.style.cursor = overSun ? 'pointer' : this.selected !== null ? 'crosshair' : 'default'
   }
@@ -312,7 +305,7 @@ export class GameController {
       return
     }
 
-    const cell = this.toCell(p)
+    const cell = cellAt(p)
     if (!cell) return
     this.keyboardCell = cell
 

@@ -34,13 +34,34 @@ export const LEVELS: LevelDef[] = [
   { name: '最后的防线', subtitle: '他们来势汹汹，而你早有准备。', waves: 5, initial: 325, gap: 40, count: 6, more: 3, theme: 'dusk' },
 ]
 
-/** Lawn geometry in canvas units. The canvas is always drawn at 1440 × 810. */
-export const FIELD = { x: 238, y: 149, cw: 115, ch: 117, cols: 9, rows: 5, w: 1440, h: 810 } as const
+/** Lawn geometry in 1440 × 810 canvas units. */
+export const FIELD = {
+  x: 238, cw: 115, cols: 9, rows: 5, w: 1440, h: 810,
+  // Measured edges of the lower five grass bands in garden.png. The grass
+  // beside the hedge is scenery; the painted lanes are not equally tall.
+  rowEdges: [235, 337, 446, 557, 667, 758],
+} as const
 
-export const center = (row: number, col: number) => ({
-  x: FIELD.x + (col + 0.5) * FIELD.cw,
-  y: FIELD.y + (row + 0.78) * FIELD.ch,
+export const cellBounds = (row: number, col: number) => ({
+  x: FIELD.x + col * FIELD.cw,
+  y: FIELD.rowEdges[row],
+  width: FIELD.cw,
+  height: FIELD.rowEdges[row + 1] - FIELD.rowEdges[row],
 })
+
+/** Ground anchor shared by plants, zombies, mowers and planting previews. */
+export const center = (row: number, col: number) => {
+  const cell = cellBounds(row, col)
+  return { x: cell.x + cell.width / 2, y: cell.y + cell.height / 2 }
+}
+
+export function cellAt(p: { x: number; y: number }) {
+  const col = Math.floor((p.x - FIELD.x) / FIELD.cw)
+  const row = FIELD.rowEdges.findIndex(
+    (top, i) => i < FIELD.rows && p.y >= top && p.y < FIELD.rowEdges[i + 1],
+  )
+  return col >= 0 && col < FIELD.cols && row >= 0 ? { row, col } : null
+}
 
 /** Source rectangles of the 12 sprites packed into `sprites.png`. */
 export const SPRITE_RECTS: [number, number, number, number][] = [
