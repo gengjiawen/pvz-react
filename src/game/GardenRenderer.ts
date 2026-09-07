@@ -47,7 +47,7 @@ const loadImage = (src: string) =>
  */
 export class GardenRenderer {
   private readonly ctx: CanvasRenderingContext2D
-  private background?: HTMLImageElement
+  private background?: HTMLCanvasElement
   private zombieAtlas?: HTMLImageElement
 
   /** Individual sprites cut out of the atlas, indexed by `PlantDef.sprite`. */
@@ -88,7 +88,7 @@ export class GardenRenderer {
     const [background, atlas, zombieAtlas] = await Promise.all([
       loadImage(gardenUrl), loadImage(spritesUrl), loadImage(zombieAnimationsUrl),
     ])
-    this.background = background
+    this.background = this.prepareBackground(background)
     this.zombieAtlas = zombieAtlas
     for (const [sx, sy, sw, sh] of SPRITE_RECTS) {
       const cut = document.createElement('canvas')
@@ -98,6 +98,30 @@ export class GardenRenderer {
       this.sprites.push(cut)
       this.thumbs.push(cut.toDataURL('image/png'))
     }
+  }
+
+  /** Fit the painted bands to the same equal-height rows used for interaction. */
+  private prepareBackground(image: HTMLImageElement) {
+    const canvas = document.createElement('canvas')
+    canvas.width = FIELD.w
+    canvas.height = FIELD.h
+    const c = canvas.getContext('2d')!
+    // Measured stripe boundaries in garden.png, expressed in canvas units.
+    // Resample once on load; the illustration does not define gameplay geometry.
+    const sourceEdges = [140, 245, 350, 463, 583, 760]
+    const sourceScale = image.naturalHeight / FIELD.h
+    const strip = (top: number, bottom: number, y: number, height: number) => {
+      c.drawImage(image, 0, top * sourceScale, image.naturalWidth, (bottom - top) * sourceScale,
+        0, y, FIELD.w, height)
+    }
+    strip(0, sourceEdges[0], 0, FIELD.y)
+    for (let row = 0; row < FIELD.rows; row++) {
+      const { y, height } = cellBounds(row, 0)
+      strip(sourceEdges[row], sourceEdges[row + 1], y, height)
+    }
+    const bottom = FIELD.y + FIELD.rows * FIELD.ch
+    strip(sourceEdges[FIELD.rows], FIELD.h, bottom, FIELD.h - bottom)
+    return canvas
   }
 
   /** Drops every transient effect — called when a new run starts. */
@@ -554,11 +578,12 @@ export class GardenRenderer {
     c.lineWidth = 1
     for (let col = 0; col <= FIELD.cols; col++) {
       c.beginPath()
-      c.moveTo(FIELD.x + col * FIELD.cw, FIELD.rowEdges[0])
-      c.lineTo(FIELD.x + col * FIELD.cw, FIELD.rowEdges[FIELD.rows])
+      c.moveTo(FIELD.x + col * FIELD.cw, FIELD.y)
+      c.lineTo(FIELD.x + col * FIELD.cw, FIELD.y + FIELD.rows * FIELD.ch)
       c.stroke()
     }
-    for (const y of FIELD.rowEdges) {
+    for (let row = 0; row <= FIELD.rows; row++) {
+      const y = FIELD.y + row * FIELD.ch
       c.beginPath()
       c.moveTo(FIELD.x, y)
       c.lineTo(FIELD.x + FIELD.cols * FIELD.cw, y)

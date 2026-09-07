@@ -36,17 +36,14 @@ export const LEVELS: LevelDef[] = [
 
 /** Lawn geometry in 1440 × 810 canvas units. */
 export const FIELD = {
-  x: 238, cw: 115, cols: 9, rows: 5, w: 1440, h: 810,
-  // Measured edges of the lower five grass bands in garden.png. The grass
-  // beside the hedge is scenery; the painted lanes are not equally tall.
-  rowEdges: [235, 337, 446, 557, 667, 758],
+  x: 238, y: 140, cw: 115, ch: 124, cols: 9, rows: 5, w: 1440, h: 810,
 } as const
 
 export const cellBounds = (row: number, col: number) => ({
   x: FIELD.x + col * FIELD.cw,
-  y: FIELD.rowEdges[row],
+  y: FIELD.y + row * FIELD.ch,
   width: FIELD.cw,
-  height: FIELD.rowEdges[row + 1] - FIELD.rowEdges[row],
+  height: FIELD.ch,
 })
 
 /** Ground anchor shared by plants, zombies, mowers and planting previews. */
@@ -57,10 +54,8 @@ export const center = (row: number, col: number) => {
 
 export function cellAt(p: { x: number; y: number }) {
   const col = Math.floor((p.x - FIELD.x) / FIELD.cw)
-  const row = FIELD.rowEdges.findIndex(
-    (top, i) => i < FIELD.rows && p.y >= top && p.y < FIELD.rowEdges[i + 1],
-  )
-  return col >= 0 && col < FIELD.cols && row >= 0 ? { row, col } : null
+  const row = Math.floor((p.y - FIELD.y) / FIELD.ch)
+  return col >= 0 && col < FIELD.cols && row >= 0 && row < FIELD.rows ? { row, col } : null
 }
 
 /** Source rectangles of the 12 sprites packed into `sprites.png`. */
