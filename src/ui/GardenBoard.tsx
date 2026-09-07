@@ -6,8 +6,6 @@ import { useAppStore } from '../store/appStore'
 import { useGameStore } from '../store/gameStore'
 import { HomeOverlay } from './HomeOverlay'
 import { Icon } from './Icon'
-import { PauseOverlay } from './PauseOverlay'
-import { ResultOverlay } from './ResultOverlay'
 
 const WEATHER = ['晴朗 · 适宜种植', '午后 · 危机渐近', '黄昏 · 全力以赴']
 
@@ -78,15 +76,12 @@ function LoadingCover({ status }: { status: LoadStatus }) {
 
 interface GardenBoardProps {
   canvasRef: RefObject<HTMLCanvasElement | null>
-  thumbs: string[]
   status: LoadStatus
 }
 
-export function GardenBoard({ canvasRef, thumbs, status }: GardenBoardProps) {
+export function GardenBoard({ canvasRef, status }: GardenBoardProps) {
   const controller = useController()
   const running = useGameStore((s) => s.running)
-  const paused = useGameStore((s) => s.paused)
-  const result = useAppStore((s) => s.result)
 
   return (
     <div className="garden-wrap">
@@ -117,8 +112,6 @@ export function GardenBoard({ canvasRef, thumbs, status }: GardenBoardProps) {
       <Toast />
 
       {!running && <HomeOverlay />}
-      {paused && <PauseOverlay thumbs={thumbs} />}
-      {result && <ResultOverlay result={result} thumbs={thumbs} />}
       {status !== 'ready' && <LoadingCover status={status} />}
     </div>
   )

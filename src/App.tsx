@@ -9,6 +9,8 @@ import { GameModals } from './ui/GameModals'
 import { GardenBoard } from './ui/GardenBoard'
 import { Icon } from './ui/Icon'
 import { Masthead } from './ui/Masthead'
+import { PauseOverlay } from './ui/PauseOverlay'
+import { ResultOverlay } from './ui/ResultOverlay'
 import { SeedBank } from './ui/SeedBank'
 
 function BottomNote() {
@@ -29,6 +31,8 @@ function BottomNote() {
 export default function App() {
   const { canvasRef, controller, thumbs, status } = useGarden()
   const running = useGameStore((s) => s.running)
+  const paused = useGameStore((s) => s.paused)
+  const result = useAppStore((s) => s.result)
   const modal = useAppStore((s) => s.modal)
   const live = useAppStore((s) => s.live)
 
@@ -52,12 +56,15 @@ export default function App() {
         <Masthead />
         <section className="play-container" aria-label="植物大战僵尸游戏">
           <SeedBank thumbs={thumbs} />
-          <GardenBoard canvasRef={canvasRef} thumbs={thumbs} status={status} />
+          <GardenBoard canvasRef={canvasRef} status={status} />
           <GameFooter />
         </section>
         <BottomNote />
       </main>
 
+      {/* Viewport dialogs must escape the garden's clipping and stacking context. */}
+      {paused && <PauseOverlay thumbs={thumbs} />}
+      {result && <ResultOverlay result={result} thumbs={thumbs} />}
       <GameModals thumbs={thumbs} />
       <div className="sr-only" aria-live="polite">
         {live}
