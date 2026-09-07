@@ -2,7 +2,7 @@
 
 在线试玩：**<https://pvz-react.vercel.app>**
 
-把 [seth-xh/pvz](https://github.com/seth-xh/pvz) 的单文件网页游戏（一个约 6.7 MB 的 `index.html`）重写为 Vite + React + TypeScript 工程。玩法、数值、美术和样式与原版一致，改动的是工程结构：游戏逻辑与 React 解耦，两张精灵图从 base64 内联改为构建产物。
+把 [seth-xh/pvz](https://github.com/seth-xh/pvz) 的单文件网页游戏（一个约 6.7 MB 的 `index.html`）重写为 Vite + React + TypeScript 工程。保留原版玩法、数值和界面样式，游戏逻辑与 React 解耦，图片从 base64 内联改为构建产物；另补充了僵尸的行走与啃咬动画。
 
 > 大陆网络访问 `*.vercel.app` 通常需要代理。
 
@@ -36,6 +36,7 @@ src/
     config.ts         植物/僵尸/关卡数值、场地几何、精灵图切片矩形
     LawnGame.ts       状态机与固定步长模拟
     GardenRenderer.ts Canvas 绘制，切图为 12 张离屏 canvas + 缩略图
+    zombieAnimation.ts 僵尸动画选帧、精灵图裁剪矩形与脚底锚点
     GardenAudio.ts    Web Audio 合成音效与循环旋律（无音频文件）
   store/        zustand
     gameStore.ts      每帧写入的 HUD 快照
@@ -53,9 +54,12 @@ src/
 ## 与原版的差异
 
 - 两张 PNG（合计约 5 MB）成为带 hash 的构建产物，`assetsInlineLimit: 0` 确保不被内联回 JS。
+- 新增一张透明僵尸动画图：四种僵尸各有 4 帧行走、4 帧啃咬。行走按实际移动距离选帧，咬合按攻击冷却选帧，随暂停、倍速和寒冰减速同步。
 - 全局变量与 `document.getElementById` 的手工 HUD 刷新，换成 zustand + selector。
 - 逻辑保持等价：即时击杀原本写作 `99999` 伤害，这里用 `Infinity`。
 
 ## 关于素材
 
 美术素材来自上游仓库，上游未附带任何 license；游戏本身也是对 PopCap / EA《Plants vs. Zombies》的致敬作。这份移植同样只适合自己学习和本地把玩，不要用于分发或商业用途。
+
+新增的 `src/assets/zombie-animations.png` 使用内置 imagegen 工具生成，提示词及切图说明见 [素材说明](src/assets/zombie-animations.md)。

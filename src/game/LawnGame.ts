@@ -186,8 +186,10 @@ export class LawnGame {
       maxHp: def.hp * scale,
       speed: def.speed * this.rand(0.91, 1.08),
       age: this.rand(0, 6),
+      walkDistance: 0,
       slow: 0,
       attack: 0,
+      biteDuration: 0.42,
       flash: 0,
       eating: false,
     })
@@ -396,11 +398,14 @@ export class LawnGame {
         if (z.attack <= 0) {
           victim.hp -= 28
           victim.flash = 0.15
-          z.attack = z.slow > 0 ? 0.65 : 0.42
+          z.biteDuration = z.slow > 0 ? 0.65 : 0.42
+          z.attack = z.biteDuration
           this.emit({ type: 'bite', x: victim.x, y: victim.y - 48 })
         }
       } else {
-        z.x -= z.speed * (z.slow > 0 ? 0.48 : 1) * dt
+        const distance = z.speed * (z.slow > 0 ? 0.48 : 1) * dt
+        z.x -= distance
+        z.walkDistance += distance
       }
 
       const mower = this.mowers[z.row]

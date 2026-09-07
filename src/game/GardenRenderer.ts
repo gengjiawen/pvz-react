@@ -1,8 +1,10 @@
 import gardenUrl from '../assets/garden.png'
 import spritesUrl from '../assets/sprites.png'
+import zombieAnimationsUrl from '../assets/zombie-animations.png'
 import { FIELD, PLANTS, P_CHERRY, P_CHOMPER, P_MINE, P_SUNFLOWER, P_WALLNUT, SPRITE_RECTS, ZOMBIES, center } from './config'
 import type { LawnGame } from './LawnGame'
 import type { GameEvent, Mower, Plant, PlantType, Zombie, ZombieKind } from './types'
+import { ZOMBIE_FRAMES, zombieFrame } from './zombieAnimation'
 
 /** What the renderer needs to draw an entity — real ones, ghosts and demo props alike. */
 type RenderPlant = Pick<Plant, 'type' | 'x' | 'y' | 'hp' | 'maxHp'> & Partial<Plant>
@@ -46,6 +48,7 @@ const loadImage = (src: string) =>
 export class GardenRenderer {
   private readonly ctx: CanvasRenderingContext2D
   private background?: HTMLImageElement
+  private zombieAtlas?: HTMLImageElement
 
   /** Individual sprites cut out of the atlas, indexed by `PlantDef.sprite`. */
   sprites: HTMLCanvasElement[] = []
@@ -82,8 +85,11 @@ export class GardenRenderer {
   }
 
   async load() {
-    const [background, atlas] = await Promise.all([loadImage(gardenUrl), loadImage(spritesUrl)])
+    const [background, atlas, zombieAtlas] = await Promise.all([
+      loadImage(gardenUrl), loadImage(spritesUrl), loadImage(zombieAnimationsUrl),
+    ])
     this.background = background
+    this.zombieAtlas = zombieAtlas
     for (const [sx, sy, sw, sh] of SPRITE_RECTS) {
       const cut = document.createElement('canvas')
       cut.width = sw
@@ -159,6 +165,9 @@ export class GardenRenderer {
       case 'chomp':
         this.particle(e.x, e.y, '#c79bdf', 17, 110, 7)
         this.labels.push({ x: e.x, y: e.y - 60, text: '啊呜！', life: 0.8 })
+        break
+      case 'bite':
+        this.particle(e.x + 16, e.y, '#b3cd50', 4, 35, 3)
         break
       case 'win':
         for (let i = 0; i < 80; i++) {
@@ -352,24 +361,49 @@ export class GardenRenderer {
     }
   }
 
+  private drawZombieSprite(kind: ZombieKind, frame: number, x: number, y: number, flash = 0) {
+    if (!this.zombieAtlas) return
+    const [sx, sy, sw, sh, anchorX] = ZOMBIE_FRAMES[kind][frame]
+    const scale = kind === 'football' ? 0.54 : 0.56
+    // Include the fine hair/outline outside the solid body bounds.
+    const left = sx - 2
+    const top = kind === 'football' ? Math.max(799, sy - 7) : sy - 7
+    const width = sw + 4
+    const height = sy + sh + 2 - top
+    const c = this.ctx
+    c.save()
+    if (flash > 0) c.filter = 'brightness(1.8)'
+    c.drawImage(
+      this.zombieAtlas, left, top, width, height,
+      x + (left - anchorX) * scale, y + (top - sy - sh) * scale,
+      width * scale, height * scale,
+    )
+    c.restore()
+  }
+
   private zombie(z: RenderZombie, demo = false) {
     const c = this.ctx
     const t = this.time
     const def = ZOMBIES[z.type]
     const slow = z.slow ?? 0
 
-    let index = def.sprite
+    let kind = z.type
     const w = z.type === 'football' ? 111 : 93
     let h = z.type === 'cone' ? 140 : 127
     // Once the cone or bucket is chewed through, the zombie shows its bare head.
     if (!demo && (z.type === 'cone' || z.type === 'bucket') && z.hp < 180) {
-      index = ZOMBIES.normal.sprite
+      kind = 'normal'
       h = 125
     }
 
-    const walk = Math.sin((z.age ?? t) * 5 + (z.id ?? 0))
-    const bob = demo ? Math.sin(t * 3 + (z.id ?? 0)) * 2 : Math.abs(walk) * (z.eating ? 1 : 4)
-    const rot = z.eating ? Math.sin(t * 9) * 0.045 : walk * 0.025
+    const frame = zombieFrame({
+      id: z.id ?? 0,
+      type: z.type,
+      walkDistance: z.walkDistance ?? t * def.speed,
+      eating: z.eating ?? false,
+      attack: z.attack ?? 0,
+      biteDuration: z.biteDuration ?? 0.42,
+    })
 
     this.shadow(z.x, z.y + 1, w * 0.37, 9, 0.25)
 
@@ -385,7 +419,7 @@ export class GardenRenderer {
       c.save()
       c.shadowColor = '#a1eaff'
       c.shadowBlur = 13
-      this.drawSprite(index, z.x, z.y - bob, w, h, rot, 1, z.flash ?? 0)
+      this.drawZombieSprite(kind, frame, z.x, z.y, z.flash ?? 0)
       c.restore()
 
       c.save()
@@ -403,7 +437,7 @@ export class GardenRenderer {
       }
       c.restore()
     } else {
-      this.drawSprite(index, z.x, z.y - bob, w, h, rot, 1, z.flash ?? 0)
+      this.drawZombieSprite(kind, frame, z.x, z.y, z.flash ?? 0)
     }
 
     if (z.hp < z.maxHp) {
@@ -620,7 +654,8 @@ export class GardenRenderer {
       c.save()
       c.translate(dead.x, dead.y)
       c.rotate(-Math.min(1.45, dead.age * 2.6))
-      this.drawSprite(ZOMBIES[dead.kind].sprite, 0, 0, 90, 122, 0, Math.max(0, 1 - dead.age))
+      c.globalAlpha = Math.max(0, 1 - dead.age)
+      this.drawZombieSprite(dead.kind, 0, 0, 0)
       c.restore()
     }
     this.corpses = this.corpses.filter((d) => d.age < 1)

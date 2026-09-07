@@ -62,8 +62,12 @@ export interface Zombie {
   maxHp: number
   speed: number
   age: number
+  /** Actual distance travelled; the walk cycle stops while eating. */
+  walkDistance: number
   slow: number
   attack: number
+  /** Duration of the current bite, retained if slow changes mid-cycle. */
+  biteDuration: number
   flash: number
   eating: boolean
 }
