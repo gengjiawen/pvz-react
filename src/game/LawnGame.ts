@@ -190,6 +190,7 @@ export class LawnGame {
       slow: 0,
       attack: 0,
       biteDuration: 0.42,
+      eatPhase: 0,
       flash: 0,
       eating: false,
     })
@@ -392,9 +393,12 @@ export class LawnGame {
       const victim = this.plants
         .filter((p) => p.hp > 0 && p.row === z.row && z.x - p.x < 48 && z.x - p.x > -42)
         .sort((a, b) => b.x - a.x)[0]
+      const wasEating = z.eating
       z.eating = !!victim
 
       if (victim) {
+        // A full-body chew spans three damage ticks: 1.26 s at normal speed.
+        z.eatPhase = wasEating ? (z.eatPhase + dt / (z.biteDuration * 3)) % 1 : 0
         if (z.attack <= 0) {
           victim.hp -= 28
           victim.flash = 0.15
@@ -403,6 +407,7 @@ export class LawnGame {
           this.emit({ type: 'bite', x: victim.x, y: victim.y - 48 })
         }
       } else {
+        z.eatPhase = 0
         const distance = z.speed * (z.slow > 0 ? 0.48 : 1) * dt
         z.x -= distance
         z.walkDistance += distance

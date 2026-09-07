@@ -68,6 +68,8 @@ export interface Zombie {
   attack: number
   /** Duration of the current bite, retained if slow changes mid-cycle. */
   biteDuration: number
+  /** Full-body chewing progress (0–1), independent of individual damage ticks. */
+  eatPhase: number
   flash: number
   eating: boolean
 }

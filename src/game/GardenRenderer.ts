@@ -401,8 +401,7 @@ export class GardenRenderer {
       type: z.type,
       walkDistance: z.walkDistance ?? t * def.speed,
       eating: z.eating ?? false,
-      attack: z.attack ?? 0,
-      biteDuration: z.biteDuration ?? 0.42,
+      eatPhase: z.eatPhase ?? 0,
     })
 
     this.shadow(z.x, z.y + 1, w * 0.37, 9, 0.25)

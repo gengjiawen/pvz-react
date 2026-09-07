@@ -1,14 +1,13 @@
 import type { Zombie, ZombieKind } from './types'
 
-type AnimationState = Pick<Zombie, 'id' | 'type' | 'walkDistance' | 'eating' | 'attack' | 'biteDuration'>
+type AnimationState = Pick<Zombie, 'id' | 'type' | 'walkDistance' | 'eating' | 'eatPhase'>
 
-// Damage lands at the closed-jaw frame. Recover, reach, open, then bite again.
+// Start in contact, then recover, reach and open for the next slow chew.
 const BITE_FRAMES = [6, 7, 4, 5] as const
 
 export function zombieFrame(z: AnimationState): number {
   if (z.eating) {
-    const progress = Math.max(0, Math.min(1, 1 - z.attack / z.biteDuration))
-    return BITE_FRAMES[Math.min(3, Math.floor(progress * BITE_FRAMES.length))]
+    return BITE_FRAMES[Math.floor(z.eatPhase * BITE_FRAMES.length)]
   }
 
   const stride = z.type === 'football' ? 34 : 26
