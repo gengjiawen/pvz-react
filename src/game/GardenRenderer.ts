@@ -1,7 +1,7 @@
 import gardenUrl from '../assets/garden.png'
 import spritesUrl from '../assets/sprites.png'
 import zombieAnimationsUrl from '../assets/zombie-animations.png'
-import { FIELD, PLANTS, P_CHERRY, P_CHOMPER, P_MINE, P_SUNFLOWER, P_WALLNUT, SPRITE_RECTS, ZOMBIES, cellBounds, center } from './config'
+import { FIELD, MOWER, PLANTS, P_CHERRY, P_CHOMPER, P_MINE, P_SUNFLOWER, P_WALLNUT, SPRITE_RECTS, ZOMBIES, cellBounds, center } from './config'
 import type { LawnGame } from './LawnGame'
 import type { GameEvent, Mower, Plant, PlantType, Zombie, ZombieKind } from './types'
 import { ZOMBIE_FRAMES, zombieFrame } from './zombieAnimation'
@@ -475,10 +475,11 @@ export class GardenRenderer {
     const y = center(m.row, 0).y - 2
     const moving = m.state === 'moving'
 
-    this.shadow(x, y + 5, 28, 7, 0.27)
+    this.shadow(x, y + 5 * MOWER.scale, 28 * MOWER.scale, 7 * MOWER.scale, 0.27)
     c.save()
     c.translate(x, y)
     if (moving) c.translate(0, Math.sin(this.time * 55) * 2)
+    c.scale(MOWER.scale, MOWER.scale)
 
     c.strokeStyle = '#344036'
     c.lineWidth = 4
@@ -767,7 +768,7 @@ export class GardenRenderer {
     const kinds: ZombieKind[] = ['normal', 'normal', 'cone', 'bucket', 'normal']
 
     for (let row = 0; row < FIELD.rows; row++) {
-      this.mower({ row, x: FIELD.x - 47, state: 'ready' })
+      this.mower({ row, x: MOWER.parkedX[row], state: 'ready' })
       for (const [r, col, type] of layout.filter((a) => a[0] === row)) {
         this.plant({ type, ...center(r, col), id: r * 9 + col, age: 5, hp: 100, maxHp: 100 }, true)
       }

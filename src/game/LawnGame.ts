@@ -1,6 +1,7 @@
 import {
   FIELD,
   LEVELS,
+  MOWER,
   PLANTS,
   P_CHERRY,
   P_CHOMPER,
@@ -74,7 +75,7 @@ export class LawnGame {
     this.waveTotal = this.endless ? Infinity : this.config.waves
     this.mowers = Array.from({ length: FIELD.rows }, (_, row) => ({
       row,
-      x: FIELD.x - 48,
+      x: MOWER.parkedX[row],
       state: 'ready' as const,
     }))
   }

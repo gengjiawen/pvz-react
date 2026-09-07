@@ -39,6 +39,9 @@ export const FIELD = {
   x: 238, y: 140, cw: 115, ch: 124, cols: 9, rows: 5, w: 1440, h: 810,
 } as const
 
+/** Parking points follow the sloping stone path beside the five lawn rows. */
+export const MOWER = { parkedX: [221, 208, 192, 180, 166], scale: 0.8 } as const
+
 export const cellBounds = (row: number, col: number) => ({
   x: FIELD.x + col * FIELD.cw,
   y: FIELD.y + row * FIELD.ch,
